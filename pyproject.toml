@@ -1,0 +1,9 @@
+[project]
+name = "qsign"
+version = "0.1.0"
+description = "Statistical threat detection for teleportation based quantum digital signatures"
+requires-python = ">=3.10"
+dependencies = ["qiskit>=1.2", "qiskit-aer>=0.15", "numpy>=1.26", "fastapi>=0.110", "uvicorn>=0.29"]
+
+[project.scripts]
+qsign = "qsign.cli:main"

@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QSIGN Verifier Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#14213d; --muted:#5a6475; --line:#d6dde8; --panel:#ffffff; --page:#eef2f8;
+  --blue:#1b3a8c; --blue2:#e8eefb; --saff:#e8731c; --saff2:#fdeee2; --green:#1e8c4e; --green2:#e5f4ea;
+  --red:#c62828; --red2:#fbe9e7; --dred:#8e1b1b;
+  --sans:"IBM Plex Sans",Carlito,"Segoe UI",Arial,sans-serif; --mono:"IBM Plex Mono","DejaVu Sans Mono",Consolas,monospace;
+  box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --ink:#e6ebf5; --muted:#9aa6ba; --line:#2c3850; --panel:#162033; --page:#0e1626; --blue2:#1c2c52; --saff2:#3a2616; --green2:#15321f; --red2:#3a1a1a; } }
+:root[data-theme="dark"]{ --ink:#e6ebf5; --muted:#9aa6ba; --line:#2c3850; --panel:#162033; --page:#0e1626; --blue2:#1c2c52; --saff2:#3a2616; --green2:#15321f; --red2:#3a1a1a; }
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--page);color:var(--ink);font-family:var(--sans);font-size:14px}
+header{display:flex;align-items:center;gap:18px;padding:12px 22px;background:var(--blue);color:#fff}
+header .brand{font-weight:700;font-size:20px;letter-spacing:.3px}
+header .sub{opacity:.85;font-size:13px}
+header .spacer{flex:1}
+header .pill{font-family:var(--mono);font-size:12px;background:rgba(255,255,255,.14);padding:5px 10px;border-radius:6px}
+.wrap{display:grid;grid-template-columns:300px 1fr;gap:16px;padding:16px 22px;max-width:1640px;margin:0 auto}
+.side,.main{min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h3{margin:0 0 10px;font-size:14px;font-weight:600}
+.scen{display:flex;flex-direction:column;gap:6px}
+.scen button{all:unset;cursor:pointer;border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:block}
+.scen button b{display:block;font-size:13px}
+.scen button span{display:block;font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.35}
+.scen button[aria-pressed="true"]{border-color:var(--blue);background:var(--blue2);box-shadow:inset 3px 0 0 var(--blue)}
+.scen button.atk[aria-pressed="true"]{border-color:var(--red);background:var(--red2);box-shadow:inset 3px 0 0 var(--red)}
+label.row{display:grid;grid-template-columns:1fr auto;gap:4px 8px;font-size:12.5px;margin:10px 0 0}
+label.row output{font-family:var(--mono);font-size:12px}
+label.row input{grid-column:1/3;width:100%;accent-color:var(--blue)}
+.run{margin-top:14px;width:100%;padding:10px;border:0;border-radius:8px;background:var(--saff);color:#fff;font-weight:600;font-size:14px;cursor:pointer;font-family:var(--sans)}
+.verdict{display:grid;grid-template-columns:auto 1fr auto;gap:18px;align-items:center;border-radius:10px;padding:14px 18px;border:1px solid var(--line);background:var(--panel)}
+.verdict .tag{font-size:26px;font-weight:700;padding:8px 18px;border-radius:8px;color:#fff;min-width:150px;text-align:center}
+.verdict .why{font-size:14px;line-height:1.45}
+.verdict .why small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.verdict .meta{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;line-height:1.6}
+.kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin:12px 0}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.kpi .l{font-size:11.5px;color:var(--muted)}
+.kpi .v{font-family:var(--mono);font-size:22px;font-weight:600;margin-top:2px}
+.kpi .t{font-size:11px;color:var(--muted);margin-top:2px}
+.kpi.bad .v{color:var(--red)} .kpi.ok .v{color:var(--green)} .kpi.warn .v{color:var(--saff)}
+.grid2{display:grid;grid-template-columns:1.35fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;margin-top:12px}
+canvas{width:100%;display:block}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{padding:5px 6px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{font-weight:600;color:var(--muted);font-size:11.5px}
+td.m{font-family:var(--mono)}
+.ok{color:var(--green)} .bad{color:var(--red)} .warn{color:var(--saff)}
+.pass,.fail,.hold{font-weight:600;font-size:11.5px;padding:2px 8px;border-radius:10px}
+.pass{background:var(--green2);color:var(--green)} .fail{background:var(--red2);color:var(--red)} .hold{background:var(--saff2);color:var(--saff)}
+.ledger{font-family:var(--mono);font-size:11.5px;line-height:1.7;max-height:190px;overflow:auto}
+.ledger div{display:flex;gap:10px;border-bottom:1px dashed var(--line)}
+.ledger .h{color:var(--muted)}
+.note{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4}
+.tablewrap{overflow-x:auto}
+@media (max-width:1100px){.wrap{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(3,1fr)}.grid2,.grid3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">QSIGN Verifier Console</div>
+  <div class="sub">Teleportation based quantum digital signatures, statistical threat detection, no machine learning</div>
+  <div class="spacer"></div>
+  <div class="pill" id="sess">session</div>
+</header>
+<div class="wrap">
+  <aside class="side">
+    <div class="card">
+      <h3>Attack laboratory</h3>
+      <div class="scen" id="scen"></div>
+      <label class="row">Signature length, Bell pairs <output id="oN"></output><input id="N" type="range" min="128" max="2048" step="128" value="1024"></label>
+      <label class="row">CHSH sample pairs <output id="oM"></output><input id="M" type="range" min="400" max="4000" step="200" value="2400"></label>
+      <label class="row">Background channel noise <output id="oP"></output><input id="P" type="range" min="0" max="0.1" step="0.005" value="0.02"></label>
+      <label class="row">Accept threshold T <output id="oT"></output><input id="T" type="range" min="0.03" max="0.1" step="0.005" value="0.07"></label>
+      <button class="run" id="run">Run verification</button>
+      <div class="note">Every run simulates each Bell pair with a three qubit state vector: Bell pair creation, Pauli eigenstate encoding, Bell measurement, Pauli correction and projective measurement.</div>
+    </div>
+  </aside>
+  <main class="main">
+    <div class="verdict" id="verdict"></div>
+    <div class="kpis" id="kpis"></div>
+    <div class="grid2">
+      <div class="card"><h3>Running mismatch rate as bits are verified</h3><canvas id="cRun" height="300"></canvas>
+        <div class="note">Green line is the accept threshold, orange band is the retest zone, red line is the reject limit.</div></div>
+      <div class="card"><h3>Entanglement health, CHSH value</h3><canvas id="cChsh" height="130"></canvas>
+        <h3 style="margin-top:12px">Mismatch by basis</h3><canvas id="cBasis" height="95"></canvas></div>
+    </div>
+    <div class="grid3">
+      <div class="card"><h3>Protocol trace, first ten bits</h3><div class="tablewrap"><table id="trace"></table></div></div>
+      <div class="card"><h3>Evidence trail</h3><table id="evidence"></table><div class="note" id="bound"></div></div>
+      <div class="card"><h3>Hash chained key ledger</h3><div class="ledger" id="ledger"></div></div>
+    </div>
+  </main>
+</div>
+<script>
+// ---------- tiny state vector simulator ----------
+const S2 = Math.SQRT1_2;
+function newState(n){const d=1<<n;const re=new Float64Array(d),im=new Float64Array(d);re[0]=1;return {n,re,im};}
+function g1(s,q,m){ // m = [a,b,c,d] complex as [re,im] pairs
+  const d=1<<s.n,bit=1<<q;
+  for(let i=0;i<d;i++){ if(i&bit) continue; const j=i|bit;
+    const ar=s.re[i],ai=s.im[i],br=s.re[j],bi=s.im[j];
+    s.re[i]=m[0][0]*ar-m[0][1]*ai+m[1][0]*br-m[1][1]*bi; s.im[i]=m[0][0]*ai+m[0][1]*ar+m[1][0]*bi+m[1][1]*br;
+    s.re[j]=m[2][0]*ar-m[2][1]*ai+m[3][0]*br-m[3][1]*bi; s.im[j]=m[2][0]*ai+m[2][1]*ar+m[3][0]*bi+m[3][1]*br; }
+}
+const H=[[S2,0],[S2,0],[S2,0],[-S2,0]], X=[[0,0],[1,0],[1,0],[0,0]], Z=[[1,0],[0,0],[0,0],[-1,0]], Y=[[0,0],[0,-1],[0,1],[0,0]];
+const RY=t=>[[Math.cos(t/2),0],[-Math.sin(t/2),0],[Math.sin(t/2),0],[Math.cos(t/2),0]];
+function cx(s,c,t){const d=1<<s.n,cb=1<<c,tb=1<<t;for(let i=0;i<d;i++){if((i&cb)&&!(i&tb)){const j=i|tb;[s.re[i],s.re[j]]=[s.re[j],s.re[i]];[s.im[i],s.im[j]]=[s.im[j],s.im[i]];}}}
+function meas(s,q){const d=1<<s.n,bit=1<<q;let p1=0;for(let i=0;i<d;i++) if(i&bit) p1+=s.re[i]**2+s.im[i]**2;
+  const r=Math.random()<p1?1:0, norm=Math.sqrt(r?p1:1-p1);
+  for(let i=0;i<d;i++){ if(((i&bit)?1:0)!==r){s.re[i]=0;s.im[i]=0;} else {s.re[i]/=norm;s.im[i]/=norm;} } return r;}
+function depol(s,q,p){ if(p<=0) return; const u=Math.random(); if(u<p/3) g1(s,q,X); else if(u<2*p/3) g1(s,q,Y); else if(u<p) g1(s,q,Z); }
+function measBasisResend(s,q,basis){ if(basis) g1(s,q,H); meas(s,q); if(basis) g1(s,q,H); }
+
+// ---------- scenarios ----------
+const SCEN = [
+ {id:"honest", name:"Honest signature", d:"Legitimate signer, normal channel noise", atk:false},
+ {id:"forgery", name:"Forgery", d:"Attacker signs without knowing the secret basis sequence", atk:true},
+ {id:"imperson", name:"Impersonation", d:"Attacker sends bits without holding the signer's Bell pairs", atk:true},
+ {id:"replay", name:"Replay", d:"A previously accepted signature is submitted again", atk:true},
+ {id:"intercept", name:"Channel interception", d:"Eavesdropper measures half of the Bell pairs in transit", atk:true},
+ {id:"noise", name:"Noise injection", d:"Attacker floods the quantum channel with strong noise", atk:true},
+ {id:"rogue", name:"Unauthorised verification", d:"Third party measures teleported states before the verifier", atk:true},
+];
+let current = "honest", keyCounter = 4096, lastAccepted = null, ledger = [], prevHash = "0".repeat(16);
+
+function channelOnB(s, q, cfg){ // attacks and noise acting on verifier half during distribution
+  depol(s,q,cfg.p);
+  if(cfg.scen==="noise") depol(s,q,0.25);
+  if(cfg.scen==="intercept" && Math.random()<0.5) measBasisResend(s,q,0);
+}
+
+function signBit(bit, basis, cfg){
+  const s=newState(3); // q0 message, q1 signer half A, q2 verifier half B
+  g1(s,1,H); cx(s,1,2); channelOnB(s,2,cfg);
+  let useBasis = basis;
+  if(cfg.scen==="forgery") useBasis = Math.random()<0.5?0:1;
+  if(bit) g1(s,0,X); if(useBasis) g1(s,0,H);
+  let m1,m2;
+  if(cfg.scen==="imperson"){ m1=Math.random()<.5?1:0; m2=Math.random()<.5?1:0; }
+  else { cx(s,0,1); g1(s,0,H); m1=meas(s,0); m2=meas(s,1); }
+  if(cfg.scen==="rogue") measBasisResend(s,2,Math.random()<.5?0:1);
+  if(m2) g1(s,2,X); if(m1) g1(s,2,Z);
+  if(basis) g1(s,2,H);
+  const out=meas(s,2);
+  return {bit,basis,m1,m2,out,ok:out===bit};
+}
+
+function chshSample(cfg, M){
+  const A=[0,Math.PI/2], B=[Math.PI/4,-Math.PI/4]; const sum=[[0,0],[0,0]], cnt=[[0,0],[0,0]];
+  for(let k=0;k<M;k++){ const i=k%2, j=(k>>1)%2; const s=newState(2);
+    g1(s,0,H); cx(s,0,1); channelOnB(s,1,cfg);
+    g1(s,0,RY(-A[i])); g1(s,1,RY(-B[j]));
+    const a=meas(s,0), b=meas(s,1); sum[i][j]+= (a===b)?1:-1; cnt[i][j]++; }
+  const E=(i,j)=>sum[i][j]/cnt[i][j];
+  return {S: E(0,0)+E(0,1)+E(1,0)-E(1,1), E:[E(0,0),E(0,1),E(1,0),E(1,1)]};
+}
+
+async function sha(t){const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("").slice(0,16);}
+
+async function run(){
+  const N=+qs("N").value, M=+qs("M").value, p=+qs("P").value, T=+qs("T").value, R=T+0.04;
+  const cfg={scen:current,p};
+  let indexStart, reused=false, rows=[], bits=[];
+  if(current==="replay" && lastAccepted){ indexStart=lastAccepted.start; reused=true; }
+  else { indexStart=keyCounter; keyCounter+=N; }
+  const keyBasis=[]; for(let i=0;i<N;i++) keyBasis.push(Math.random()<.5?0:1);
+  let errZ=0,nZ=0,errX=0,nX=0,err=0; const running=[];
+  for(let i=0;i<N;i++){ const bit=Math.random()<.5?1:0; const r=signBit(bit,keyBasis[i],current==="replay"?{scen:"honest",p}:cfg);
+    if(i<10) rows.push({idx:indexStart+i,...r});
+    if(r.basis){nX++; if(!r.ok) errX++;} else {nZ++; if(!r.ok) errZ++;}
+    if(!r.ok) err++; running.push(err/(i+1)); }
+  const ch=chshSample(current==="replay"?{scen:"honest",p}:cfg, M);
+  const e=err/N, eZ=errZ/nZ, eX=errX/nX, bound=Math.exp(-2*N*Math.max(0,0.146-T)**2);
+  const tests=[
+    {n:"Test 1, ledger", v: reused?`index ${indexStart} reused`:`${N} new indices`, th:"never used before", r: reused?"fail":"pass"},
+    {n:"Test 2, CHSH", v: ch.S.toFixed(3), th:"at least 2.600", r: ch.S>=2.6?"pass":"fail"},
+    {n:"Test 3, mismatch", v:(e*100).toFixed(2)+" percent", th:`accept at most ${(T*100).toFixed(1)}, reject from ${(R*100).toFixed(1)}`, r: e<=T?"pass":(e>=R?"fail":"hold")},
+  ];
+  let verdict, color, why;
+  if(reused){verdict="ALERT";color="var(--dred)";why=`Replay detected: key index ${indexStart} is already recorded in the ledger from an earlier accepted signature.`;}
+  else if(ch.S<2.6){verdict="ALERT";color="var(--dred)";why=`Channel tampering: CHSH value ${ch.S.toFixed(3)} is below the 2.600 alert line, so the Bell pairs are no longer trustworthy.`;}
+  else if(e<=T){verdict="ACCEPT";color="var(--green)";why=`All tests passed: mismatch ${(e*100).toFixed(2)} percent is within the ${(T*100).toFixed(1)} percent threshold and entanglement is healthy.`;}
+  else if(e>=R){verdict="REJECT";color="var(--red)";why=`Mismatch ${(e*100).toFixed(2)} percent exceeds the ${(R*100).toFixed(1)} percent reject limit, consistent with a forged or impersonated signature.`;}
+  else {verdict="RETEST";color="var(--saff)";why=`Mismatch ${(e*100).toFixed(2)} percent sits in the grey zone, so QSIGN requests more Bell pairs before deciding.`;}
+  if(verdict==="ACCEPT") lastAccepted={start:indexStart};
+  if(!reused){ const h=await sha(prevHash+"|"+indexStart+"|"+N+"|"+verdict); ledger.unshift({i:indexStart,n:N,v:verdict,h,prev:prevHash}); prevHash=h; }
+  else ledger.unshift({i:indexStart,n:N,v:"ALERT replay",h:"blocked",prev:prevHash});
+  render({N,M,p,T,R,e,eZ,eX,ch,bound,verdict,color,why,tests,rows,running,indexStart});
+}
+
+function render(r){
+  const sc=SCEN.find(s=>s.id===current);
+  qs("verdict").innerHTML=`<div class="tag" style="background:${r.color}">${r.verdict}</div>
+   <div class="why"><b>${sc.name}.</b> ${r.why}<small>Decision made by fixed threshold rules on measured statistics; no model training involved.</small></div>
+   <div class="meta">key index ${r.indexStart} onward<br>${r.N} signature pairs<br>${r.M} CHSH pairs</div>`;
+  const k=[
+    ["Overall mismatch",(r.e*100).toFixed(2)+"%", r.e<=r.T?"ok":(r.e>=r.R?"bad":"warn"),"accept at most "+(r.T*100).toFixed(1)+"%"],
+    ["Z basis mismatch",(r.eZ*100).toFixed(2)+"%", r.eZ<=r.T?"ok":"bad","bits encoded as zero or one"],
+    ["X basis mismatch",(r.eX*100).toFixed(2)+"%", r.eX<=r.T?"ok":"bad","bits encoded as plus or minus"],
+    ["CHSH value",r.ch.S.toFixed(3), r.ch.S>=2.6?"ok":"bad","ideal 2.828, alert below 2.6"],
+    ["Ledger status", r.tests[0].r==="pass"?"clean":"reused", r.tests[0].r==="pass"?"ok":"bad","hash chained, append only"],
+    ["Forgery bound", r.bound<1e-3? r.bound.toExponential(1).replace("e","E"): r.bound.toFixed(3),"ok","Hoeffding, optimal cloning forger"]];
+  qs("kpis").innerHTML=k.map(x=>`<div class="kpi ${x[2]}"><div class="l">${x[0]}</div><div class="v">${x[1]}</div><div class="t">${x[3]}</div></div>`).join("");
+  qs("trace").innerHTML=`<tr><th>Index</th><th>Basis</th><th>Bit</th><th>State</th><th>m1 m2</th><th>Correction</th><th>Result</th></tr>`+
+    r.rows.map(x=>{const st=x.basis?(x.bit?"minus":"plus"):(x.bit?"one":"zero");const corr=(x.m2?"X ":"")+(x.m1?"Z":"")||"none";
+      return `<tr><td class="m">${x.idx}</td><td>${x.basis?"X":"Z"}</td><td class="m">${x.bit}</td><td>${st}</td><td class="m">${x.m1} ${x.m2}</td><td>${corr}</td><td class="${x.ok?"ok":"bad"}">${x.ok?"match":"mismatch"}</td></tr>`}).join("");
+  qs("evidence").innerHTML=`<tr><th>Check</th><th>Measured</th><th>Rule</th><th></th></tr>`+r.tests.map(t=>`<tr><td>${t.n}</td><td class="m">${t.v}</td><td>${t.th}</td><td><span class="${t.r}">${t.r==="hold"?"retest":t.r}</span></td></tr>`).join("");
+  qs("bound").textContent=`Forgery bound for these settings: probability at most ${r.bound.toExponential(2).replace("e","E")}, from Hoeffding's inequality with an optimal cloning forger at 14.6 percent mismatch.`;
+  qs("ledger").innerHTML=ledger.slice(0,9).map(l=>`<div><span>#${l.i}</span><span>${l.n} pairs</span><span class="${/ALERT|REJECT/.test(l.v)?"bad":(l.v==="RETEST"?"warn":"ok")}">${l.v}</span><span class="h">${l.h}</span></div>`).join("");
+  drawRun(r); drawChsh(r); drawBasis(r);
+}
+
+function ctx(id){const c=qs(id),dpr=window.devicePixelRatio||1,w=c.clientWidth,h=+(c.dataset.h||(c.dataset.h=c.getAttribute("height")));c.width=w*dpr;c.height=h*dpr;c.style.height=h+"px";const g=c.getContext("2d");g.scale(dpr,dpr);g.font="11px "+getComputedStyle(document.body).fontFamily;return [g,w,h];}
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function drawRun(r){const [g,w,h]=ctx("cRun"),L=44,B=24,top=8,maxY=Math.max(0.2,Math.min(0.6,Math.max(...r.running.slice(20))*1.2));
+  const X=i=>L+(w-L-10)*i/(r.running.length-1), Yv=v=>top+(h-top-B)*(1-v/maxY);
+  g.fillStyle=css("--saff2");g.fillRect(L,Yv(r.R),w-L-10,Yv(r.T)-Yv(r.R));
+  g.strokeStyle=css("--line");g.fillStyle=css("--muted");for(let v=0;v<=maxY+1e-9;v+=maxY/4){g.beginPath();g.moveTo(L,Yv(v));g.lineTo(w-10,Yv(v));g.stroke();g.fillText((v*100).toFixed(0)+"%",6,Yv(v)+4);}
+  [[r.T,css("--green")],[r.R,css("--red")]].forEach(([v,c])=>{g.strokeStyle=c;g.setLineDash([5,4]);g.lineWidth=1.5;g.beginPath();g.moveTo(L,Yv(v));g.lineTo(w-10,Yv(v));g.stroke();g.setLineDash([]);});
+  g.strokeStyle=css("--blue");g.lineWidth=2;g.beginPath();r.running.forEach((v,i)=>{i?g.lineTo(X(i),Yv(Math.min(v,maxY))):g.moveTo(X(i),Yv(Math.min(v,maxY)));});g.stroke();
+  g.fillStyle=css("--muted");g.fillText("bits verified",w-80,h-6);g.fillText("0",L,h-6);g.fillText(String(r.N),w-40,h-18);}
+function drawChsh(r){const [g,w,h]=ctx("cChsh"),L=10,R=w-10,y=40,max=3;const Xv=v=>L+(R-L)*Math.max(0,Math.min(v,max))/max;
+  g.fillStyle=css("--red2");g.fillRect(L,y,Xv(2)-L,24);g.fillStyle=css("--saff2");g.fillRect(Xv(2),y,Xv(2.6)-Xv(2),24);g.fillStyle=css("--green2");g.fillRect(Xv(2.6),y,R-Xv(2.6),24);
+  g.fillStyle=r.ch.S>=2.6?css("--green"):css("--red");g.fillRect(L,y+6,Xv(r.ch.S)-L,12);
+  g.fillStyle=css("--ink");g.font="bold 20px "+getComputedStyle(document.body).fontFamily;g.fillText("S = "+r.ch.S.toFixed(3),L,26);
+  g.font="11px "+getComputedStyle(document.body).fontFamily;g.fillStyle=css("--muted");
+  [[2,"classical limit 2.0"],[2.6,"alert 2.6"],[2.828,"ideal 2.83"]].forEach(([v,t],k)=>{g.fillRect(Xv(v),y-4,1.5,32);g.fillText(t,Math.min(Xv(v)-20,R-70),y+44+(k%2)*13);});}
+function drawBasis(r){const [g,w,h]=ctx("cBasis"),L=70,max=0.6;const items=[["Z basis",r.eZ],["X basis",r.eX]];
+  items.forEach(([n,v],i)=>{const y=12+i*40;g.fillStyle=css("--muted");g.fillText(n,4,y+15);g.fillStyle=css("--line");g.fillRect(L,y,w-L-60,22);
+   g.fillStyle=v<=r.T?css("--green"):css("--red");g.fillRect(L,y,(w-L-60)*Math.min(v,max)/max,22);g.fillStyle=css("--ink");g.fillText((v*100).toFixed(1)+"%",w-54,y+15);
+   g.strokeStyle=css("--saff");g.setLineDash([4,3]);g.beginPath();g.moveTo(L+(w-L-60)*r.T/max,y-4);g.lineTo(L+(w-L-60)*r.T/max,y+26);g.stroke();g.setLineDash([]);});}
+
+function qs(id){return document.getElementById(id);}
+function drawScen(){qs("scen").innerHTML=SCEN.map(s=>`<button class="${s.atk?"atk":""}" aria-pressed="${s.id===current}" data-id="${s.id}"><b>${s.name}</b><span>${s.d}</span></button>`).join("");
+  qs("scen").querySelectorAll("button").forEach(b=>b.onclick=()=>{current=b.dataset.id;drawScen();run();});}
+function sync(){qs("oN").textContent=qs("N").value;qs("oM").textContent=qs("M").value;qs("oP").textContent=(+qs("P").value*100).toFixed(1)+"%";qs("oT").textContent=(+qs("T").value*100).toFixed(1)+"%";}
+["N","M","P","T"].forEach(i=>qs(i).oninput=sync);
+qs("run").onclick=run;
+qs("sess").textContent="session "+Math.random().toString(16).slice(2,8).toUpperCase();
+window.__setScenario=async id=>{current=id;drawScen();await run();};
+sync();drawScen();run();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 **Statistical threat detection for teleportation based quantum digital signatures.**
 Smart India Hackathon 2026, problem statement 26141, Egreen Quanta LLP. Team Diva.
 
-Live demo: https://zeefromzee.github.io/qsign/
+Live demo: q-sign-w.vercel.app
 
 QSIGN simulates a complete teleportation based quantum digital signature (QDS) protocol with Qiskit Aer and guards it with a detection engine built only on Pauli measurement statistics and fixed threshold rules. It detects forgery, impersonation, replay, quantum channel manipulation and unauthorised verification, and it explains every decision. No machine learning is used anywhere, as the problem statement requires.
 

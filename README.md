@@ -48,7 +48,6 @@ uvicorn qsign.api:app --reload # REST API on port 8000
 ```
 
 Open `frontend/index.html` in a browser for the interactive verifier console,
-or use the hosted copy at https://zeefromzee.github.io/qsign/
 
 ## Repository layout
 
